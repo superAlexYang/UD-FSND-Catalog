@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for, f
 from flask import session as login_session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, ToyShop, ToyItem, User
+from database_setup import Base, CarShop, CarItem, User
 
 
 engine = create_engine('postgresql://catalog:catalog123@localhost/catalog')
@@ -14,7 +14,6 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-# User Helper Functions
 def createUser(login_session):
     newUser = User(name=login_session['username'], email=login_session[
                    'email'], picture=login_session['picture'])
@@ -37,7 +36,7 @@ def getUserID(email):
     except:
         return None
 
-def checkLogin(login_session): # check user has loged in or not
+def checkLogin(login_session):
 	credentials = login_session.get('credentials')
 	if credentials is None:
 		return False

@@ -3,7 +3,7 @@ from flask import Flask, jsonify,render_template, request, redirect, jsonify, ur
 from flask import session as login_session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, ToyShop, ToyItem, User
+from database_setup import Base, CarShop, CarItem, User
 from functions_helper import *
 import random, string
 
@@ -32,17 +32,17 @@ session = DBSession()
 @app.route('/')
 @app.route('/index/')
 def showShops():
-	toyshops = session.query(ToyShop).all()
-	return render_template("main.html",toyshops = toyshops, login_session = login_session )
+	carshops = session.query(CarShop).all()
+	return render_template("main.html",carshops = carshops, login_session = login_session )
 
 
 @app.route('/index/<string:shop_ID>/')
 def showItems(shop_ID):
-	toyshop = session.query(ToyShop).filter_by(id=shop_ID).one()
-	user_id = toyshop.user_id
+	carshop = session.query(CarShop).filter_by(id=shop_ID).one()
+	user_id = carshop.user_id
 	user = session.query(User).filter_by(id = user_id).one()
-	toys = session.query(ToyItem).filter_by(shop_id=shop_ID).all()
-	return render_template('toys.html', toys=toys, toyshop=toyshop, user = user, login_session = login_session)
+	cars = session.query(CarItem).filter_by(shop_id=shop_ID).all()
+	return render_template('cars.html', cars=cars, carshop=carshop, user = user, login_session = login_session)
 
 
 @app.route('/login/')
@@ -195,82 +195,82 @@ def gdisconnect():
 @app.route('/new/', methods=['GET', 'POST'])
 def newShop():
 	if not checkLogin(login_session):
-		flash('You must login to create a toy shop')
+		flash('You must login to create a car shop')
 		return redirect(url_for('showShops'))
 	
 	if request.method == 'POST':
 		
-		newShop = ToyShop(name=request.form['name'],description = request.form['description'], user_id = login_session.get('user_id') )
+		newShop = CarShop(name=request.form['name'],description = request.form['description'], user_id = login_session.get('user_id') )
 		session.add(newShop)
-		flash('New Toy shop %s Successfully Created' % newShop.name)
+		flash('New Car shop %s Successfully Created' % newShop.name)
 		session.commit()
 		return redirect(url_for('showShops'))
 	else:
 		return render_template('newshop.html',login_session = login_session)
 
-# add a new toy to shop
+# add a new car to shop
 @app.route('/index/<string:shop_ID>/add', methods=['GET', 'POST'])
-def addNewToy(shop_ID):
+def addNewCar(shop_ID):
 	if not checkLogin(login_session):
-		flash('You must login to create a toy shop')
+		flash('You must login to create a car shop')
 		return redirect(url_for('showShops'))
 	if request.method == 'POST':
-		newToy = ToyItem(name=request.form['name'],
+		newCar = CarItem(name=request.form['name'],
 						description = request.form['description'], 
 						user_id = login_session.get('user_id'), 
 						price = request.form['price'], 
 						shop_id = shop_ID)
-		session.add(newToy)
+		session.add(newCar)
 		session.commit()
-		flash('New Toy %s has been successfully Created' % newToy.name)
+		flash('New Car %s has been successfully Created' % newCar.name)
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	else:
-		return render_template('newtoy.html',shop_ID = shop_ID,login_session = login_session)
+		return render_template('newcar.html',shop_ID = shop_ID,login_session = login_session)
 
-# delete a toy from shop
-@app.route('/index/<string:shop_ID>/<string:toy_ID>/delete')
-def deleteToy(shop_ID,toy_ID):
+# delete a car from shop
+@app.route('/index/<string:shop_ID>/<string:car_ID>/delete')
+def deleteCar(shop_ID,car_ID):
 	if not checkLogin(login_session):
-		flash('You must login to manage a toy shop.')
+		flash('You must login to manage a car shop.')
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	login_user_id = getUserID(login_session['email'])
-	toyToDelete = session.query(ToyItem).filter_by(id=toy_ID).one()
-	if toyToDelete.user_id != login_user_id:
+	carToDelete = session.query(CarItem).filter_by(id=car_ID).one()
+	if carToDelete.user_id != login_user_id:
 		flash("You can only manage your own shop.")
 		return redirect(url_for('showItems',shop_ID = shop_ID))
-	session.delete(toyToDelete)
+	session.delete(carToDelete)
 	session.commit()
 	flash("You have managed your shop successfully.")
 	return redirect(url_for('showItems',shop_ID = shop_ID))
 
-# edit a toy
-@app.route('/index/<string:shop_ID>/<string:toy_ID>/edit', methods=['GET', 'POST'])
-def editToy(shop_ID,toy_ID):
+# edit a car
+@app.route('/index/<string:shop_ID>/<string:car_ID>/edit', methods=['GET', 'POST'])
+def editCar(shop_ID,car_ID):
 	if not checkLogin(login_session):
-		flash('You must login to manage a toy shop.')
+		flash('You must login to manage a car shop.')
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	login_user_id = getUserID(login_session['email'])
-	toyToEdite = session.query(ToyItem).filter_by(id=toy_ID).one()
-	if toyToEdite.user_id != login_user_id:
+	carToEdite = session.query(CarItem).filter_by(id=car_ID).one()
+	if carToEdite.user_id != login_user_id:
 		flash("You can only manage your own shop.")
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	if request.method == 'POST':
-		toyToEdite.name = request.form['name']
-		toyToEdite.description = request.form['description']
-		toyToEdite.price = request.form['price']
-		flash('%s has been successfully edited' % toyToEdite.name)
+		carToEdite.name = request.form['name']
+		carToEdite.description = request.form['description']
+		carToEdite.price = request.form['price']
+		flash('%s has been successfully edited' % carToEdite.name)
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	else:
-		return render_template('editToy.html',toy = toyToEdite,login_session = login_session)
+		return render_template('editCar.html',car = carToEdite,login_session = login_session)
 
-# edit a toy shop
+# edit a car shop
 @app.route('/index/<string:shop_ID>/edit', methods=['GET', 'POST'])
-def editToyshop(shop_ID):
+def editCarshop(shop_ID):
 	if not checkLogin(login_session):
-		flash('You must login to manage a toy shop.')
+		flash('You must login to manage a car shop.')
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	login_user_id = getUserID(login_session['email'])
-	shopToEdit = session.query(ToyShop).filter_by(id=shop_ID).one()
+	shopToEdit = session.query(CarShop).filter_by(id=shop_ID).one()
 	if shopToEdit.user_id != login_user_id:
 		flash("You can only manage your own shop.")
 		return redirect(url_for('showItems',shop_ID = shop_ID))
@@ -280,16 +280,16 @@ def editToyshop(shop_ID):
 		flash('%s has been successfully edited' % shopToEdit.name)
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	else:
-		return render_template('editShop.html',toyShop = shopToEdit,login_session = login_session)
+		return render_template('editShop.html',carShop = shopToEdit,login_session = login_session)
 
-# delete a toy shop
+# delete a car shop
 @app.route('/index/<string:shop_ID>/delete/')
-def deleteToyshop(shop_ID):
+def deleteCarshop(shop_ID):
 	if not checkLogin(login_session):
-		flash('You must login to manage a toy shop.')
+		flash('You must login to manage a car shop.')
 		return redirect(url_for('showItems',shop_ID = shop_ID))
 	login_user_id = getUserID(login_session['email'])
-	ShopToDelete = session.query(ToyShop).filter_by(id=shop_ID).one()
+	ShopToDelete = session.query(CarShop).filter_by(id=shop_ID).one()
 	if ShopToDelete.user_id != login_user_id:
 		flash("You can only delete your own shop.")
 		return redirect(url_for('showShops'))
@@ -306,15 +306,15 @@ def help():
 #json APIs
 @app.route('/index/<string:shop_ID>/JSON/')
 def shopJSON(shop_ID):
-    shops = session.query(ToyShop).filter_by(id=shop_ID).one()
-    toys = session.query(ToyItem).filter_by(shop_id = shop_ID).all()
-    return jsonify(Shop=shops.serialize, Toys = [g.serialize for g in toys])
+    shops = session.query(CarShop).filter_by(id=shop_ID).one()
+    cars = session.query(CarItem).filter_by(shop_id = shop_ID).all()
+    return jsonify(Shop=shops.serialize, Cars = [g.serialize for g in cars])
 
 
-@app.route('/index/<string:shop_ID>/<string:toy_ID>/JSON/')
-def toyJSON(shop_ID,toy_ID):
-    toy = session.query(ToyItem).filter_by(id=toy_ID).one()
-    return jsonify(Toy = toy.serialize)
+@app.route('/index/<string:shop_ID>/<string:car_ID>/JSON/')
+def carJSON(shop_ID,car_ID):
+    car = session.query(CarItem).filter_by(id=car_ID).one()
+    return jsonify(Car = car.serialize)
 
 if __name__ == '__main__':
 	app.secret_key = 'super secret key'
